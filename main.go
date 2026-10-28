@@ -8,55 +8,90 @@
 							)
 
 							type Block struct {
-								Index        int
-									Timestamp    string
-										Data         string
-											PreviousHash string
-												Hash         string
+								Number     int
+									Timestamp  string
+										Data       string
+											PrevHash   string
+												Hash       string
 												}
 
-												func calculateHash(b Block) string {
-													record := fmt.Sprintf("%d%s%s%s",
-															b.Index, b.Timestamp, b.Data, b.PreviousHash)
-																sum := sha256.Sum256([]byte(record))
-																	return fmt.Sprintf("%x", sum)
-																	}
+												type Blockchain struct {
+													Blocks []Block
+													}
 
-																	func createBlock(index int, data, previousHash string) Block {
-																		b := Block{
-																				Index:        index,
-																						Timestamp:    time.Now().UTC().Format(time.RFC3339Nano),
-																								Data:         data,
-																										PreviousHash: previousHash,
+													func calculateHash(b Block) string {
+														record := fmt.Sprintf(
+																"%d|%s|%s|%s",
+																		b.Number,
+																				b.Timestamp,
+																						b.Data,
+																								b.PrevHash,
+																									)
+
+																										sum := sha256.Sum256([]byte(record))
+																											return fmt.Sprintf("%x", sum)
 																											}
-																												b.Hash = calculateHash(b)
-																													return b
-																													}
 
-																													func isChainValid(chain []Block) bool {
-																														for i, b := range chain {
-																																if b.Hash != calculateHash(b) {
-																																			return false
-																																					}
-																																							if i > 0 && b.PreviousHash != chain[i-1].Hash {
-																																										return false
-																																												}
+																											func (bc *Blockchain) AddBlock(data string) {
+																												var previousHash string
+																													number := len(bc.Blocks)
+
+																														if number > 0 {
+																																previousHash = bc.Blocks[number-1].Hash
+																																	}
+
+																																		block := Block{
+																																				Number:    number,
+																																						Timestamp: time.Now().Format(time.RFC3339),
+																																								Data:      data,
+																																										PrevHash:  previousHash,
+																																											}
+
+																																												block.Hash = calculateHash(block)
+																																													bc.Blocks = append(bc.Blocks, block)
 																																													}
-																																														return true
-																																														}
 
-																																														func main() {
-																																															genesis := createBlock(0, "Bharat Eagle Genesis", "0")
-																																																block1 := createBlock(1, "BEC test transaction", genesis.Hash)
+																																													func (bc Blockchain) IsValid() bool {
+																																														for i, block := range bc.Blocks {
+																																																if block.Hash != calculateHash(block) {
+																																																			return false
+																																																					}
 
-																																																	chain := []Block{genesis, block1}
+																																																							if i == 0 {
+																																																										if block.PrevHash != "" {
+																																																														return false
+																																																																	}
+																																																																			} else {
+																																																																						if block.PrevHash != bc.Blocks[i-1].Hash {
+																																																																										return false
+																																																																													}
+																																																																															}
+																																																																																}
 
-																																																		fmt.Println("Bharat Eagle Chain (BEC)")
-																																																			fmt.Println("Before tampering:", isChainValid(chain))
+																																																																																	return true
+																																																																																	}
 
-																																																				// Test: change block data without updating its hash.
-																																																					chain[1].Data = "Changed data - not original"
+																																																																																	func main() {
+																																																																																		chain := Blockchain{}
 
-																																																						fmt.Println("After tampering:", isChainValid(chain))
-																																																						}
-																																																						
+																																																																																			chain.AddBlock("BEC Genesis Block")
+																																																																																				chain.AddBlock("First BEC test transaction")
+																																																																																					chain.AddBlock("Second BEC test transaction")
+
+																																																																																						fmt.Println("=== Bharat Eagle Chain (BEC) ===")
+																																																																																							fmt.Println("Total blocks:", len(chain.Blocks))
+																																																																																								fmt.Println()
+
+																																																																																									for _, block := range chain.Blocks {
+																																																																																											fmt.Println("Block Number:", block.Number)
+																																																																																													fmt.Println("Time:", block.Timestamp)
+																																																																																															fmt.Println("Data:", block.Data)
+																																																																																																	fmt.Println("Previous Hash:", block.PrevHash)
+																																																																																																			fmt.Println("Hash:", block.Hash)
+																																																																																																					fmt.Println("------------------------------")
+																																																																																																						}
+
+																																																																																																							fmt.Println("Blockchain valid:", chain.IsValid())
+																																																																																																							}
+
+																																																																																																							
